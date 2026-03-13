@@ -1,17 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none">
-  <!-- TSH letters - bold angular style -->
-  <g fill="#ffffff">
-    <!-- T -->
-    <polygon points="6,14 24,14 24,19 18,19 18,36 12,36 12,19 6,19"/>
-    <!-- S -->
-    <path d="M25,14h14v6h-8v3h8v7h-8v3h8v6h-14v-6h8v-3h-8v-7h8v-3h-8z"/>
-    <!-- H with arrow -->
-    <polygon points="41,14 47,14 47,22 51,22 51,14 57,14 57,36 51,36 51,28 47,28 47,36 41,36"/>
-    <!-- Arrow on H -->
-    <polygon points="49,10 54,16 52,16 52,14 46,14 46,16 44,16"/>
-  </g>
-  <!-- AI text -->
-  <g fill="rgba(255,255,255,0.85)">
-    <text x="30" y="50" font-family="Inter,Arial,sans-serif" font-weight="900" font-size="11" text-anchor="middle" letter-spacing="2">AI</text>
-  </g>
+  <defs>
+    <linearGradient id="sparkle" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#55efc4"/>
+      <stop offset="100%" stop-color="#00b894"/>
+    </linearGradient>
+  </defs>
+  <!-- Chat bubble shape -->
+  <path d="M10 12C10 9.8 11.8 8 14 8h32c2.2 0 4 1.8 4 4v24c0 2.2-1.8 4-4 4H22l-8 7V36h0c-2.2 0-4-1.8-4-4V12z" fill="white" opacity="0.95"/>
+  <!-- AI sparkle star - top right -->
+  <path d="M42 11l1.8 3.6 3.8.6-2.8 2.7.7 3.8L42 19.8l-3.5 1.9.7-3.8-2.8-2.7 3.8-.6z" fill="url(#sparkle)"/>
+  <!-- AI sparkle star - small -->
+  <path d="M16 13l1 2 2 .3-1.5 1.5.4 2L16 17.5l-1.9 1.3.4-2-1.5-1.5 2-.3z" fill="url(#sparkle)" opacity="0.6"/>
+  <!-- Bold AI text -->
+  <text x="30" y="30" font-family="Inter,Arial,Helvetica,sans-serif" font-weight="900" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#0d5c63" letter-spacing="-0.5">AI</text>
+  <!-- Subtle dots representing thinking -->
+  <circle cx="20" cy="44" r="2.5" fill="white" opacity="0.5"/>
+  <circle cx="14" cy="48" r="1.8" fill="white" opacity="0.35"/>
 </svg>
