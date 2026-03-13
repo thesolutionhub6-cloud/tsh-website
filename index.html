@@ -1069,66 +1069,15 @@
       <h2 class="section-title">Immigration News &amp; Insights</h2>
       <p class="section-subtitle">Stay informed with the latest IRCC policy changes and immigration updates</p>
 
-      <div class="news-grid">
-        <article class="news-card featured-news">
-          <div class="news-tag urgent">Breaking</div>
-          <h3>TR to PR 2026 Pathway Announced — 33,000 Spots</h3>
-          <p>IRCC has officially announced the new Temporary Resident to Permanent Resident pathway for 2026, offering 33,000 spots for eligible temporary residents already in Canada.</p>
-          <div class="news-meta">
-            <span>&#128197; March 1, 2026</span>
-            <span>&#128337; 4 min read</span>
-          </div>
-        </article>
-
-        <article class="news-card">
-          <div class="news-tag">Express Entry</div>
-          <h3>Draw #298: CRS Cutoff Drops to 524</h3>
-          <p>The latest Express Entry draw issued 3,200 ITAs with a minimum CRS score of 524, continuing the downward trend from late 2025.</p>
-          <div class="news-meta">
-            <span>&#128197; March 5, 2026</span>
-            <span>&#128337; 3 min read</span>
-          </div>
-        </article>
-
-        <article class="news-card">
-          <div class="news-tag">Policy</div>
-          <h3>PGWP Rules Updated for 2026 Graduates</h3>
-          <p>New PGWP eligibility rules now require programs to be on the updated DLI list. Check if your program qualifies before applying.</p>
-          <div class="news-meta">
-            <span>&#128197; February 20, 2026</span>
-            <span>&#128337; 5 min read</span>
-          </div>
-        </article>
-
-        <article class="news-card">
-          <div class="news-tag">Atlantic</div>
-          <h3>New Brunswick Expands PNP EOI Draws</h3>
-          <p>NB PNP has increased EOI draw frequency to bi-weekly, targeting healthcare workers, ECE professionals, and skilled tradespeople.</p>
-          <div class="news-meta">
-            <span>&#128197; February 12, 2026</span>
-            <span>&#128337; 3 min read</span>
-          </div>
-        </article>
-
-        <article class="news-card">
-          <div class="news-tag">OINP</div>
-          <h3>Ontario Tech Draw Invites 2,400 Candidates</h3>
-          <p>OINP's latest Human Capital Priorities tech draw targeted software developers, data analysts, and IT project managers.</p>
-          <div class="news-meta">
-            <span>&#128197; February 8, 2026</span>
-            <span>&#128337; 3 min read</span>
-          </div>
-        </article>
-
-        <article class="news-card">
-          <div class="news-tag">Policy</div>
-          <h3>IRCC Reduces Processing Times for Work Permits</h3>
-          <p>Employer-specific work permits are now being processed in as little as 6 weeks, down from the previous 10-12 week average.</p>
-          <div class="news-meta">
-            <span>&#128197; January 28, 2026</span>
-            <span>&#128337; 2 min read</span>
-          </div>
-        </article>
+      <div class="news-grid" id="newsGrid">
+        <!-- News cards loaded dynamically from IRCC feeds -->
+        <div class="news-loading" id="newsLoading">
+          <div class="news-spinner"></div>
+          <p>Loading latest immigration news...</p>
+        </div>
+      </div>
+      <div class="news-source-note" id="newsSourceNote" style="display:none;">
+        <small>Auto-updated from official IRCC &amp; ESDC feeds</small>
       </div>
     </div>
   </section>

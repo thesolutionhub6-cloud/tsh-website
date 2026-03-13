@@ -1022,3 +1022,110 @@ if (whatsappBtn) {
     }
   });
 }
+
+// ===== Auto-updating Immigration News from IRCC Feeds =====
+(function loadIRCCNews() {
+  const grid = document.getElementById('newsGrid');
+  const loading = document.getElementById('newsLoading');
+  const sourceNote = document.getElementById('newsSourceNote');
+  if (!grid) return;
+
+  const CACHE_KEY = 'tsh_ircc_news';
+  const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
+
+  function formatDate(dateStr) {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch { return dateStr; }
+  }
+
+  function renderNews(articles) {
+    if (!articles || articles.length === 0) {
+      grid.innerHTML = '<p style="text-align:center;grid-column:1/-1;opacity:0.7;">No recent news available. Check back soon.</p>';
+      return;
+    }
+    grid.innerHTML = articles.map((item, i) => `
+      <article class="news-card${i === 0 ? ' featured-news' : ''}">
+        <div class="news-tag${i === 0 ? ' urgent' : ''}">${item.tag || 'Policy'}</div>
+        <h3>${item.link ? '<a href="' + item.link + '" target="_blank" rel="noopener noreferrer">' + item.title + '</a>' : item.title}</h3>
+        <p>${item.summary}</p>
+        <div class="news-meta">
+          <span>&#128197; ${formatDate(item.date)}</span>
+          <span class="news-source-badge">${item.source === 'IRCC' ? 'IRCC' : 'ESDC'}</span>
+        </div>
+      </article>
+    `).join('');
+    if (sourceNote) sourceNote.style.display = 'block';
+  }
+
+  // Check cache first
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      renderNews(cached.news);
+      if (loading) loading.style.display = 'none';
+      return;
+    }
+  } catch {}
+
+  // Fetch from Netlify function
+  fetch('/.netlify/functions/fetch-news')
+    .then(res => res.json())
+    .then(data => {
+      if (loading) loading.style.display = 'none';
+      if (data.news && data.news.length > 0) {
+        renderNews(data.news);
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ news: data.news, timestamp: Date.now() }));
+        } catch {}
+      } else {
+        renderFallback();
+      }
+    })
+    .catch(() => {
+      if (loading) loading.style.display = 'none';
+      renderFallback();
+    });
+
+  function renderFallback() {
+    grid.innerHTML = `
+      <article class="news-card featured-news">
+        <div class="news-tag urgent">Breaking</div>
+        <h3>TR to PR 2026 Pathway Announced — 33,000 Spots</h3>
+        <p>IRCC has officially announced the new Temporary Resident to Permanent Resident pathway for 2026, offering 33,000 spots for eligible temporary residents already in Canada.</p>
+        <div class="news-meta"><span>&#128197; March 1, 2026</span><span>&#128337; 4 min read</span></div>
+      </article>
+      <article class="news-card">
+        <div class="news-tag">Express Entry</div>
+        <h3>Draw #298: CRS Cutoff Drops to 524</h3>
+        <p>The latest Express Entry draw issued 3,200 ITAs with a minimum CRS score of 524, continuing the downward trend from late 2025.</p>
+        <div class="news-meta"><span>&#128197; March 5, 2026</span><span>&#128337; 3 min read</span></div>
+      </article>
+      <article class="news-card">
+        <div class="news-tag">Policy</div>
+        <h3>PGWP Rules Updated for 2026 Graduates</h3>
+        <p>New PGWP eligibility rules now require programs to be on the updated DLI list. Check if your program qualifies before applying.</p>
+        <div class="news-meta"><span>&#128197; February 20, 2026</span><span>&#128337; 5 min read</span></div>
+      </article>
+      <article class="news-card">
+        <div class="news-tag">Atlantic</div>
+        <h3>New Brunswick Expands PNP EOI Draws</h3>
+        <p>NB PNP has increased EOI draw frequency to bi-weekly, targeting healthcare workers, ECE professionals, and skilled tradespeople.</p>
+        <div class="news-meta"><span>&#128197; February 12, 2026</span><span>&#128337; 3 min read</span></div>
+      </article>
+      <article class="news-card">
+        <div class="news-tag">OINP</div>
+        <h3>Ontario Tech Draw Invites 2,400 Candidates</h3>
+        <p>OINP's latest Human Capital Priorities tech draw targeted software developers, data analysts, and IT project managers.</p>
+        <div class="news-meta"><span>&#128197; February 8, 2026</span><span>&#128337; 3 min read</span></div>
+      </article>
+      <article class="news-card">
+        <div class="news-tag">Policy</div>
+        <h3>IRCC Reduces Processing Times for Work Permits</h3>
+        <p>Employer-specific work permits are now being processed in as little as 6 weeks, down from the previous 10-12 week average.</p>
+        <div class="news-meta"><span>&#128197; January 28, 2026</span><span>&#128337; 2 min read</span></div>
+      </article>
+    `;
+  }
+})();
