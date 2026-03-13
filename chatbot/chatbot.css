@@ -28,14 +28,11 @@
   fill: #fff;
   transition: transform 0.3s;
 }
-.cb-logo-text {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 900;
-  font-size: 16px;
-  color: #fff;
-  letter-spacing: -0.5px;
-  line-height: 1;
-  user-select: none;
+.cb-logo-img {
+  width: 44px;
+  height: auto;
+  filter: brightness(0) invert(1);
+  pointer-events: none;
 }
 .chatbot-bubble .cb-icon-close { display: none; }
 .chatbot-bubble.open .cb-icon-chat { display: none; }
