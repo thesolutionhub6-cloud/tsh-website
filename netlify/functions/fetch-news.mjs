@@ -1,74 +1,10 @@
-// Netlify Scheduled Function — fetches IRCC news + CIC News immigration updates
-// Runs as an API endpoint: /.netlify/functions/fetch-news
-// Also runs on schedule (every 4 hours) to keep cache warm
+// Netlify Function — fetches IRCC news + CIC News immigration updates
+// Endpoint: /.netlify/functions/fetch-news
 
 const IRCC_FEED =
   "https://api.io.canada.ca/io-server/gc/news/en/v2?dept=departmentofcitizenshipandimmigration&sort=publishedDate&orderBy=desc&pick=12&format=atom&atomtitle=IRCC";
 const CIC_FEED = "https://www.cicnews.com/feed";
 
-/* ---------- Atom parser (IRCC) ---------- */
-function parseAtomFeed(xml, source) {
-  const entries = [];
-  const entryBlocks = xml.split("<entry>").slice(1);
-
-  for (const block of entryBlocks.slice(0, 10)) {
-    const title = block.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1]?.trim() || "";
-    const summary =
-      block.match(/<summary[^>]*>([\s\S]*?)<\/summary>/)?.[1]?.trim() ||
-      block.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1]?.trim() ||
-      "";
-    const updated =
-      block.match(/<updated>([\s\S]*?)<\/updated>/)?.[1]?.trim() ||
-      block.match(/<published>([\s\S]*?)<\/published>/)?.[1]?.trim() ||
-      "";
-    const link = block.match(/<link[^>]*href="([^"]*)"[^>]*\/?\s*>/)?.[1] || "";
-
-    if (title) {
-      entries.push({
-        title: clean(title),
-        summary: clean(summary).substring(0, 200),
-        date: updated,
-        link,
-        source,
-        tag: categorize(clean(title)),
-      });
-    }
-  }
-  return entries;
-}
-
-/* ---------- RSS 2.0 parser (CIC News) ---------- */
-function parseRssFeed(xml, source) {
-  const entries = [];
-  const itemBlocks = xml.split("<item>").slice(1);
-
-  for (const block of itemBlocks.slice(0, 10)) {
-    const title = block.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() || "";
-    const desc =
-      block.match(/<description>([\s\S]*?)<\/description>/)?.[1]?.trim() || "";
-    const pubDate = block.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
-    const link = block.match(/<link>([\s\S]*?)<\/link>/)?.[1]?.trim() || "";
-    const category =
-      block.match(/<category><!\[CDATA\[([\s\S]*?)\]\]><\/category>/)?.[1]?.trim() || "";
-
-    // strip CDATA wrappers if present
-    const cleanTitle = clean(title.replace(/<!\[CDATA\[|\]\]>/g, ""));
-
-    if (cleanTitle) {
-      entries.push({
-        title: cleanTitle,
-        summary: clean(desc.replace(/<!\[CDATA\[|\]\]>/g, "")).substring(0, 200),
-        date: pubDate ? new Date(pubDate).toISOString() : "",
-        link: link.replace(/<!\[CDATA\[|\]\]>/g, "").trim(),
-        source,
-        tag: category || categorize(cleanTitle),
-      });
-    }
-  }
-  return entries;
-}
-
-/* ---------- Helpers ---------- */
 function clean(t) {
   return t
     .replace(/<[^>]+>/g, "")
@@ -98,58 +34,94 @@ function categorize(title) {
   return "Policy";
 }
 
-/* ---------- Main handler ---------- */
-export default async (req) => {
+function parseAtomFeed(xml, source) {
+  const entries = [];
+  const entryBlocks = xml.split("<entry>").slice(1);
+  for (const block of entryBlocks.slice(0, 10)) {
+    const title = block.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1]?.trim() || "";
+    const summary =
+      block.match(/<summary[^>]*>([\s\S]*?)<\/summary>/)?.[1]?.trim() ||
+      block.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1]?.trim() || "";
+    const updated =
+      block.match(/<updated>([\s\S]*?)<\/updated>/)?.[1]?.trim() ||
+      block.match(/<published>([\s\S]*?)<\/published>/)?.[1]?.trim() || "";
+    const link = block.match(/<link[^>]*href="([^"]*)"[^>]*\/?>/)?.[1] || "";
+    if (title) {
+      entries.push({
+        title: clean(title),
+        summary: clean(summary).substring(0, 200),
+        date: updated,
+        link: link,
+        source: source,
+        tag: categorize(clean(title)),
+      });
+    }
+  }
+  return entries;
+}
+
+function parseRssFeed(xml, source) {
+  const entries = [];
+  const itemBlocks = xml.split("<item>").slice(1);
+  for (const block of itemBlocks.slice(0, 10)) {
+    const titleRaw = block.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() || "";
+    const desc = block.match(/<description>([\s\S]*?)<\/description>/)?.[1]?.trim() || "";
+    const pubDate = block.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
+    const linkRaw = block.match(/<link>([\s\S]*?)<\/link>/)?.[1]?.trim() || "";
+    const category = block.match(/<category><!\[CDATA\[([\s\S]*?)\]\]><\/category>/)?.[1]?.trim() || "";
+    const t = clean(titleRaw.replace(/<!\[CDATA\[|\]\]>/g, ""));
+    if (t) {
+      let dateISO = "";
+      try { dateISO = new Date(pubDate).toISOString(); } catch(e) { dateISO = pubDate; }
+      entries.push({
+        title: t,
+        summary: clean(desc.replace(/<!\[CDATA\[|\]\]>/g, "")).substring(0, 200),
+        date: dateISO,
+        link: linkRaw.replace(/<!\[CDATA\[|\]\]>/g, "").trim(),
+        source: source,
+        tag: category || categorize(t),
+      });
+    }
+  }
+  return entries;
+}
+
+export default async function handler(req) {
+  const headers = {
+    "Content-Type": "application/json",
+    "Cache-Control": "public, max-age=14400, s-maxage=14400",
+    "Access-Control-Allow-Origin": "*",
+  };
+
   try {
-    const [irccRes, cicRes] = await Promise.allSettled([
+    const results = await Promise.allSettled([
       fetch(IRCC_FEED, { headers: { "User-Agent": "TSH-News-Bot/1.0" } }),
       fetch(CIC_FEED, { headers: { "User-Agent": "TSH-News-Bot/1.0" } }),
     ]);
 
     let allNews = [];
 
-    if (irccRes.status === "fulfilled" && irccRes.value.ok) {
-      const xml = await irccRes.value.text();
+    if (results[0].status === "fulfilled" && results[0].value.ok) {
+      const xml = await results[0].value.text();
       allNews.push(...parseAtomFeed(xml, "IRCC"));
     }
 
-    if (cicRes.status === "fulfilled" && cicRes.value.ok) {
-      const xml = await cicRes.value.text();
+    if (results[1].status === "fulfilled" && results[1].value.ok) {
+      const xml = await results[1].value.text();
       allNews.push(...parseRssFeed(xml, "CIC News"));
     }
 
-    // Sort by date descending
     allNews.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    // Take top 6
     const news = allNews.slice(0, 6);
 
-    return new Response(
-      JSON.stringify({ news, fetchedAt: new Date().toISOString() }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "public, max-age=14400, s-maxage=14400",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
+    return new Response(JSON.stringify({ news: news, fetchedAt: new Date().toISOString() }), {
+      status: 200,
+      headers: headers,
+    });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: "Failed to fetch news", news: [] }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message, news: [] }), {
+      status: 500,
+      headers: headers,
+    });
   }
-};
-
-// Schedule: runs every 4 hours
-export const config = {
-  schedule: "0 */4 * * *",
-};
+}
