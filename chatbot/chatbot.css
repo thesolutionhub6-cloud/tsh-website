@@ -29,10 +29,10 @@
   transition: transform 0.3s;
 }
 .cb-logo-img {
-  width: 44px;
-  height: auto;
-  filter: brightness(0) invert(1);
+  width: 48px;
+  height: 48px;
   pointer-events: none;
+  border-radius: 50%;
 }
 .chatbot-bubble .cb-icon-close { display: none; }
 .chatbot-bubble.open .cb-icon-chat { display: none; }
