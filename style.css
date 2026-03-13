@@ -677,7 +677,7 @@ ul { list-style: none; }
 
 /* ===== Back to Top Button ===== */
 .back-to-top {
-  position: fixed; bottom: 28px; right: 172px; z-index: 998;
+  position: fixed; bottom: 100px; right: 28px; z-index: 998;
   width: 46px; height: 46px; border-radius: 50%;
   background: linear-gradient(135deg, var(--primary), var(--primary-light));
   color: var(--white); border: none; cursor: pointer;
