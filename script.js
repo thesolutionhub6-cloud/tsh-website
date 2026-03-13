@@ -1052,7 +1052,7 @@ if (whatsappBtn) {
         <p>${item.summary}</p>
         <div class="news-meta">
           <span>&#128197; ${formatDate(item.date)}</span>
-          <span class="news-source-badge">${item.source === 'IRCC' ? 'IRCC' : 'ESDC'}</span>
+          <span class="news-source-badge">${item.source || 'IRCC'}</span>
         </div>
       </article>
     `).join('');
