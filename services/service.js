@@ -14,13 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const links = document.getElementById('navLinks');
   if (toggle && links) {
     toggle.addEventListener('click', () => {
-      links.classList.toggle('active');
-      toggle.classList.toggle('active');
+      links.classList.toggle('open');
+      toggle.classList.toggle('open');
     });
     links.querySelectorAll('a').forEach(a => {
       a.addEventListener('click', () => {
-        links.classList.remove('active');
-        toggle.classList.remove('active');
+        links.classList.remove('open');
+        toggle.classList.remove('open');
       });
     });
   }
@@ -61,7 +61,7 @@ function initDocChecklist() {
       updateProgress();
     });
     item.addEventListener('click', (e) => {
-      if (e.target === cb) return;
+      if (e.target === cb || e.target.tagName === 'LABEL') return;
       cb.checked = !cb.checked;
       item.classList.toggle('checked', cb.checked);
       updateProgress();

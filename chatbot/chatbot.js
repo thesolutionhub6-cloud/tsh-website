@@ -128,7 +128,12 @@
     // Markdown formatting
     h = h.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.+?)\*/g, "<em>$1</em>")
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(_, text, url) {
+        if (/^https?:\/\//i.test(url)) {
+          return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + text + '</a>';
+        }
+        return text + ' (' + url + ')';
+      });
     // Lists: collect consecutive lines starting with "- "
     h = h.replace(/^- (.+)$/gm, "<li>$1</li>");
     h = h.replace(/((?:<li>.*?<\/li>\s*)+)/g, "<ul>$1</ul>");
@@ -166,11 +171,15 @@
     showTyping();
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       const resp = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: messages }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       removeTyping();
 

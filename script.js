@@ -2,23 +2,25 @@
 const navbar = document.getElementById('navbar');
 const backToTopBtn = document.getElementById('backToTop');
 window.addEventListener('scroll', () => {
-  navbar.classList.toggle('scrolled', window.scrollY > 50);
+  if (navbar) navbar.classList.toggle('scrolled', window.scrollY > 50);
   if (backToTopBtn) backToTopBtn.classList.toggle('visible', window.scrollY > 400);
 });
 
 // ===== Mobile Menu =====
 const navToggle = document.getElementById('navToggle');
 const navLinks = document.getElementById('navLinks');
-navToggle.addEventListener('click', () => {
-  navToggle.classList.toggle('open');
-  navLinks.classList.toggle('open');
-});
-navLinks.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', () => {
-    navToggle.classList.remove('open');
-    navLinks.classList.remove('open');
+if (navToggle && navLinks) {
+  navToggle.addEventListener('click', () => {
+    navToggle.classList.toggle('open');
+    navLinks.classList.toggle('open');
   });
-});
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      navToggle.classList.remove('open');
+      navLinks.classList.remove('open');
+    });
+  });
+}
 
 // ===== Active Nav on Scroll =====
 const sections = document.querySelectorAll('section[id]');
@@ -38,7 +40,7 @@ const statNumbers = document.querySelectorAll('.stat-number');
 let statAnimated = false;
 function animateStats() {
   statNumbers.forEach(el => {
-    const target = parseInt(el.getAttribute('data-target'));
+    const target = parseInt(el.getAttribute('data-target'), 10) || 0;
     const duration = 2000;
     const step = target / (duration / 16);
     let current = 0;
@@ -79,8 +81,12 @@ document.querySelectorAll(
 // ===== Smooth Scroll =====
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', function(e) {
-    const target = document.querySelector(this.getAttribute('href'));
-    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    const href = this.getAttribute('href');
+    if (!href || href === '#') return;
+    try {
+      const target = document.querySelector(href);
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    } catch (err) { /* invalid selector */ }
   });
 });
 
@@ -292,11 +298,59 @@ function calculateCRS() {
   // Bonus points
   let bonus = 0;
   document.querySelectorAll('.bonus-checks input:checked').forEach(cb => {
-    bonus += parseInt(cb.value);
+    const val = parseInt(cb.value);
+    if (!isNaN(val)) bonus += val;
   });
 
+  // Skill Transferability cross-factor points (max 100)
+  let skillTransfer = 0;
+  const minLang = Math.min(l1, r1, w1, s1);
+
+  // Language + Education (max 50)
+  if (minLang >= 7 && education >= 112) skillTransfer += 50;
+  else if (minLang >= 7 && education >= 84) skillTransfer += 25;
+  else if (minLang >= 5 && education >= 112) skillTransfer += 25;
+  else if (minLang >= 5 && education >= 84) skillTransfer += 13;
+
+  // Language + Canadian Work (max 50)
+  let langWork = 0;
+  const canWorkYears = canWork > 0 ? (isSingle ? (canWork >= 80 ? 3 : canWork >= 64 ? 2 : 1) : (canWork >= 72 ? 3 : canWork >= 56 ? 2 : 1)) : 0;
+  if (minLang >= 7 && canWorkYears >= 2) langWork = 50;
+  else if (minLang >= 7 && canWorkYears >= 1) langWork = 25;
+  else if (minLang >= 5 && canWorkYears >= 2) langWork = 25;
+  else if (minLang >= 5 && canWorkYears >= 1) langWork = 13;
+  skillTransfer += langWork;
+
+  // Education + Canadian Work (max 50)
+  let eduWork = 0;
+  if (education >= 112 && canWorkYears >= 2) eduWork = 50;
+  else if (education >= 112 && canWorkYears >= 1) eduWork = 25;
+  else if (education >= 84 && canWorkYears >= 2) eduWork = 25;
+  else if (education >= 84 && canWorkYears >= 1) eduWork = 13;
+  skillTransfer += eduWork;
+
+  // Foreign Work + Language (max 50)
+  const foreignWorkYears = foreignWork > 0 ? (foreignWork >= 50 ? 3 : foreignWork >= 25 ? 2 : 1) : 0;
+  let foreignLang = 0;
+  if (minLang >= 7 && foreignWorkYears >= 3) foreignLang = 50;
+  else if (minLang >= 7 && foreignWorkYears >= 1) foreignLang = 25;
+  else if (minLang >= 5 && foreignWorkYears >= 3) foreignLang = 25;
+  else if (minLang >= 5 && foreignWorkYears >= 1) foreignLang = 13;
+  skillTransfer += foreignLang;
+
+  // Foreign Work + Canadian Work (max 50)
+  let foreignCan = 0;
+  if (foreignWorkYears >= 3 && canWorkYears >= 2) foreignCan = 50;
+  else if (foreignWorkYears >= 1 && canWorkYears >= 2) foreignCan = 25;
+  else if (foreignWorkYears >= 3 && canWorkYears >= 1) foreignCan = 25;
+  else if (foreignWorkYears >= 1 && canWorkYears >= 1) foreignCan = 13;
+  skillTransfer += foreignCan;
+
+  // Cap Skill Transferability at 100
+  skillTransfer = Math.min(100, skillTransfer);
+
   const core = age + education + language + canWork;
-  const additional = foreignWork + canadianEdu + secondLangBonus;
+  const additional = foreignWork + canadianEdu + secondLangBonus + skillTransfer;
   const total = core + additional + bonus;
 
   // Display result
@@ -351,6 +405,7 @@ function calculateCRS() {
     <div><span>Foreign Work Experience</span><span>${foreignWork}</span></div>
     <div><span>Canadian Education</span><span>${canadianEdu}</span></div>
     ${secondLangBonus > 0 ? '<div><span>2nd Language Bonus</span><span>' + secondLangBonus + '</span></div>' : ''}
+    ${skillTransfer > 0 ? '<div><span>Skill Transferability</span><span>' + skillTransfer + '</span></div>' : ''}
     <div class="breakdown-subtotal"><span>Additional Total</span><span>${additional}</span></div>
     ${bonus > 0 ? '<div class="breakdown-section"><span class="breakdown-header">Bonus Points</span></div><div><span>PNP / Job Offer / Other</span><span>' + bonus + '</span></div>' : ''}
     <div class="breakdown-total"><span>Total CRS Score</span><span>${total} / 1200</span></div>
@@ -596,7 +651,7 @@ const nocSearchInput = document.getElementById('nocSearch');
 const nocResultsDiv = document.getElementById('nocResults');
 
 function searchNOC(query) {
-  nocSearchInput.value = query;
+  if (nocSearchInput) nocSearchInput.value = query;
   performNOCSearch(query);
 }
 
@@ -611,6 +666,7 @@ function nocBrowseCategory(cat) {
 
 function performNOCSearch(query) {
   document.querySelectorAll('.noc-cat-btn').forEach(b => b.classList.remove('active'));
+  if (!nocResultsDiv) return;
   if (!query || query.length < 2) { nocResultsDiv.innerHTML = ''; return; }
   const q = query.toLowerCase();
   const results = nocDatabase.filter(noc =>
@@ -673,7 +729,7 @@ function renderNOCResults(results, category) {
   }).join('');
 }
 
-nocSearchInput.addEventListener('input', (e) => performNOCSearch(e.target.value));
+if (nocSearchInput) nocSearchInput.addEventListener('input', (e) => performNOCSearch(e.target.value));
 
 
 // =============================================
@@ -698,7 +754,8 @@ document.querySelectorAll('.proc-filter').forEach(btn => {
 // =============================================
 // ASSESSMENT FORM → WHATSAPP
 // =============================================
-document.getElementById('assessmentForm').addEventListener('submit', (e) => {
+const assessmentForm = document.getElementById('assessmentForm');
+if (assessmentForm) assessmentForm.addEventListener('submit', (e) => {
   e.preventDefault();
 
   const name = document.getElementById('fullName').value;
@@ -935,7 +992,8 @@ function updateCostEstimate() {
 // FAQ ACCORDION
 // =============================================
 function toggleFaq(btn) {
-  const item = btn.parentElement;
+  const item = btn.closest('.faq-item');
+  if (!item) return;
   const wasOpen = item.classList.contains('open');
 
   // Close all
@@ -950,15 +1008,17 @@ function toggleFaq(btn) {
 // WHATSAPP BUTTON — SHOW AFTER SCROLL
 // =============================================
 const whatsappBtn = document.getElementById('whatsappFloat');
-whatsappBtn.style.opacity = '0';
-whatsappBtn.style.pointerEvents = 'none';
+if (whatsappBtn) {
+  whatsappBtn.style.opacity = '0';
+  whatsappBtn.style.pointerEvents = 'none';
 
-window.addEventListener('scroll', () => {
-  if (window.scrollY > 400) {
-    whatsappBtn.style.opacity = '1';
-    whatsappBtn.style.pointerEvents = 'auto';
-  } else {
-    whatsappBtn.style.opacity = '0';
-    whatsappBtn.style.pointerEvents = 'none';
-  }
-});
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 400) {
+      whatsappBtn.style.opacity = '1';
+      whatsappBtn.style.pointerEvents = 'auto';
+    } else {
+      whatsappBtn.style.opacity = '0';
+      whatsappBtn.style.pointerEvents = 'none';
+    }
+  });
+}

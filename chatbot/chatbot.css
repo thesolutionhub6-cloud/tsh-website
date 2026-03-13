@@ -3,7 +3,7 @@
 .chatbot-bubble {
   position: fixed;
   bottom: 28px;
-  right: 28px;
+  right: 100px;
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -126,6 +126,8 @@
   flex-direction: column;
   gap: 12px;
   background: #f5fafa;
+  scrollbar-width: thin;
+  scrollbar-color: #dce8e8 transparent;
 }
 .cb-messages::-webkit-scrollbar { width: 4px; }
 .cb-messages::-webkit-scrollbar-track { background: transparent; }
@@ -181,7 +183,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #888;
+  background: #666;
   animation: cbTyping 1.4s infinite;
 }
 .cb-typing span:nth-child(2) { animation-delay: 0.2s; }
@@ -212,7 +214,7 @@
   background: #f5fafa;
 }
 .cb-input:focus { border-color: #0e7c86; }
-.cb-input::placeholder { color: #888; }
+.cb-input::placeholder { color: #666; }
 .cb-send {
   width: 40px;
   height: 40px;
@@ -234,17 +236,14 @@
 .cb-powered {
   text-align: center;
   padding: 6px;
-  font-size: 0.7rem;
-  color: #888;
+  font-size: 0.75rem;
+  color: #666;
   background: #fff;
   border-top: 1px solid #f0f0f0;
 }
 .cb-powered a { color: #0e7c86; text-decoration: none; }
 
-/* WhatsApp button shift when chatbot present */
-.whatsapp-float.cb-shifted {
-  bottom: 100px !important;
-}
+/* WhatsApp button shift when chatbot present — no longer needed since buttons are side by side */
 
 /* Quick replies */
 .cb-quick-replies {
@@ -275,7 +274,7 @@
 @media (max-width: 480px) {
   .chatbot-panel {
     width: calc(100vw - 24px);
-    height: calc(100vh - 140px);
+    height: calc(100dvh - 140px);
     bottom: 90px;
     right: 12px;
     border-radius: 12px;
@@ -284,9 +283,6 @@
     width: 54px;
     height: 54px;
     bottom: 20px;
-    right: 16px;
-  }
-  .whatsapp-float.cb-shifted {
-    bottom: 88px !important;
+    right: 80px;
   }
 }
